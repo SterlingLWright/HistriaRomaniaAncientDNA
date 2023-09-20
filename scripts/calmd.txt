@@ -1,0 +1,6 @@
+
+
+ls *.bam|while read samples; 
+do ref=/gpfs/group/LiberalArts/default/lsw132_collab/04_LabMembersFolders/SterlingLWright/REFERENCES/hs37d5/hs37d5.fa ; 
+samtools calmd -bAr $samples $ref > ${samples}_MD.bam ; 
+done
