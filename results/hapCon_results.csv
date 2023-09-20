@@ -1,0 +1,6 @@
+HapCon Results,,,,,
+SampleID,P25,P26,P27,P29,P32
+SampleName,Histria 1959 sector X NV Campie schelet 2 M3,Histria 1972 sec 10 M6,Sector Z2 1955 M2 ,Sector Z2 1955 M1,Sector X 1956 M31
+Number of target sites covered by at least one read:,41805,780,6459,5253,1118
+Estimated genotyping error via flanking region:,0.00017,0.001,0.000378,0.001,0.001
+MLE for contamination using BFGS: ,0.233002 (0.22226 - 0.243743),0.0 (-0.067551 - 0.067551),0.183686 (0.154429 - 0.212943),0.189451 (0.154346 - 0.224555),0.00082 (-0.027097 - 0.028738)

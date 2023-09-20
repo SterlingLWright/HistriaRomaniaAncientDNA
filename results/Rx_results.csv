@@ -1,0 +1,33 @@
+Inference of biological sex using Rx approach ,,,,,,,,,,,
+,,,,,,,,,,,
+Sample,SampleID,reads mapped to X,coverage,covbases,mean depth,mean base quality,mean map quality,reads mapped to Y,Rx,95% CI,Sex estimated 
+Histria 1959 sector X NV Campie schelet 2 M3,P25_RomanianTeeth,311761,25.2568," 39,216,383 ",0.297156,39.1,37,224,1.09922,1.035733-1.162706,F
+Histria 1972 sec 10 M6,P26_RomanianTeeth,5196,0.480513," 746,095 ",0.00481872,39,37,514,0.5534031,0.5237311-0.5830751 ,M
+Sector Z2 1955 M2 ,P27_RomanianTeeth,42793,3.92429," 6,093,263 ",0.0401215,38.8,37,31,1.113154,1.038403-1.187905 ,F
+Sector Z2 1955 M6,P28_RomanianTeeth,1721,0.138675," 215,322 ",0.00138778,39.3,37,13,0.9906109,0.9417947-1.039427,F
+Sector Z2 1955 M1,P29_RomanianTeeth,39356,3.23755," 5,026,967 ",0.0330096,39.9,37,31,1.104642,1.039884-1.1694,F
+Histria 1971 Z2 Sc M8 ,P30_RomanianTeeth,1534,0.109158," 169,490 ",0.00109231,38.7,37,159,0.5455068,0.519318-0.5716956 ,M
+Histria 1955 Z2 M17,P31_RomanianTeeth,2865,0.124393," 193,146 ",0.00172842,0.633,37,17,0.9996694,0.9487628-1.050576,F
+Sector X 1956 M31,P32_RomanianTeeth,7903,0.665075," 1,032,666 ",0.00666953,40,37,797,0.5770387,0.5382531-0.6158244 ,Probably M
+,,,,,,,,,,,
+PMD (-3) filtered results,,,,,,,,,,,
+Sample,SampleID,reads mapped to X,coverage,covbases,mean depth,mean base quality,mean map quality,reads mapped to Y,Rx,95% CI,Sex estimated 
+Histria 1959 sector X NV Campie schelet 2 M3,P25_RomanianTeeth,3462,0.322759," 501,150 ",0.00323519,38.4,37,3,0.9603311,0.9111377-1.009525,F
+Histria 1972 sec 10 M6,P26_RomanianTeeth,33,0.00299864," 4,656 ",3.00E-05,38.2,37,8,0.485185,0.9111377-1.009525,M
+Sector Z2 1955 M2 ,P27_RomanianTeeth,630,0.0556834," 86,460 ",0.000556995,38.7,37,1,1.006188,0.9435319-1.068843,F
+Sector Z2 1955 M6,P28_RomanianTeeth,30,0.00270753," 4,204 ",2.71E-05,38.7,37,0,1.627469,0.8464014-2.408537,F
+Sector Z2 1955 M1,P29_RomanianTeeth,985,0.0819035," 127,172 ",0.00081935,39.3,37,0,0.9937918,0.9451159-1.042468,F
+Histria 1971 Z2 Sc M8 ,P30_RomanianTeeth,13,0.000962191," 1,494 ",9.62E-06,39.6,37,2,0.3580568,0.3235819-0.3925316,M
+Histria 1955 Z2 M17,P31_RomanianTeeth,108,0.00913051," 14,177 ",9.46E-05,0.453,37,1,0.9783315,0.9145305-1.042133,F
+Sector X 1956 M31,P32_RomanianTeeth,77,0.00638112," 9,908 ",6.38E-05,39.3,37,6,0.4943227,0.4676522-0.5209933,M
+,,,,,,,,,,,
+,,,,,,,,,,,
+,,,,,,,,,,,
+,,,,,,,,,,,
+,,,,,,,,,,,
+,,,,,,,,,,,
+,,,,,,,,,,,
+,,,,,,,,,,,
+,,,,,,,,,,,
+,,,,,,,,,,,
+,,,,,,,,,,,
