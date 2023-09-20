@@ -1,0 +1,9 @@
+genotypename: Histria_merged_SouthernArc_geno07_maf05_ld_PED.geno     # Path to the EIGENSTRAT formatted genotype file
+snpname: Histria_merged_SouthernArc_geno07_maf05_ld_PED.map          # Path to the SNP information file (MAP file)
+indivname: Histria_merged_SouthernArc_geno07_maf05_ld_PED.ind        # Path to the PED file
+evecoutname: Histria_merged_SouthernArc_geno07_maf05_ld_PED.evec    # Output file for the principal component coordinates
+evaloutname: Histria_merged_SouthernArc_geno07_maf05_ld_PED.eval    # Output file for eigenvalues
+altnormstyle: NO            # Alternative normalization style (YES or NO)
+numoutlieriter: 5           # Number of outlier removal iterations
+numoutlierevec: 10          # Number of outlier removal eigenvectors
+lsqproject: YES 	    # PCA projects is carried out by solving least squares equations rather than orthogonal projection step; useful for low coverage data
