@@ -1,1 +1,28 @@
+#################################################################################
+#
+# pileup caller 
+#
+# Sterling Wright, September 20th, 2023 
+#################################################################################
 
+pileupCaller --randomHaploid --sampleNames P25_RomanianTeeth.pmds1filter.bam,P26_RomanianTeeth.pmds1filter.bam,P27_RomanianTeeth.pmds1filter.bam,P28_RomanianTeeth.pmds1filter.bam,P29_RomanianTeeth.pmds1filter.bam,P30_RomanianTeeth.pmds1filter.bam,P31_RomanianTeeth.pmds1filter.bam,P32_RomanianTeeth.pmds1filter.bam --samplePopName Histria -f
+
+samtools mpileup -R -B -q30 -Q30 -l $SNPS -f $REFS P25_RomanianTeeth.pmds1filter.bam P26_RomanianTeeth.pmds1filter.bam P27_RomanianTeeth.pmds1filter.bam P28_RomanianTeeth.pmds1filter.bam P29_RomanianTeeth.pmds1filter.bam P30_RomanianTeeth.pmds1filter.bam P31_RomanianTeeth.pmds1filter.bam P32_RomanianTeeth.pmds1filter.bam > pileup.txt
+
+pileupCaller --randomHaploid --sampleNames P25_RomanianTeeth.pmds1filter,P26_RomanianTeeth.pmds1filter,P27_RomanianTeeth.pmds1filter,P28_RomanianTeeth.pmds1filter,P29_RomanianTeeth.pmds1filter,P30_RomanianTeeth.pmds1filter,P31_RomanianTeeth.pmds1filter,P32_RomanianTeeth.pmds1filter --samplePopName Histria -f $SNP -e Histria < pileup.txt 
+# Summary Statistics per sample 
+# SampleName: Name of the sample as given by the user 
+# TotalSites: Total number of sites in the given Snp file (before transition filtering) 
+# NonMissingCalls: Total number of sites output with a non-Missing call (before transition filtering) 
+# avgRawReads: mean coverage of raw pileup input data across total sites (incl. missing sites) 
+# avgDamageCleanedReads: mean coverage of pileup after single-stranded damage removal 
+# avgSampledFrom: mean coverage of pileup after removing reads with tri-allelic alleles 
+SampleName	TotalSites	NonMissingCalls	avgRawReads	avgDamageCleanedReads	avgSampledFrom
+P25_RomanianTeeth.pmds1filter	1233013	7259	6.130511194934685e-3	6.130511194934685e-3	6.1232120018199325e-3
+P26_RomanianTeeth.pmds1filter	1233013	240	1.95456171183921e-4	1.95456171183921e-4	1.95456171183921e-4
+P27_RomanianTeeth.pmds1filter	1233013	1066	8.69415002112711e-4	8.69415002112711e-4	8.686039806555162e-4
+P28_RomanianTeeth.pmds1filter	1233013	48	3.892902994534526e-5	3.892902994534526e-5	3.892902994534526e-5
+P29_RomanianTeeth.pmds1filter	1233013	1002	8.166986073950558e-4	8.166986073950558e-4	8.158875859378611e-4
+P30_RomanianTeeth.pmds1filter	1233013	61	4.947230888887627e-5	4.947230888887627e-5	4.947230888887627e-5
+P31_RomanianTeeth.pmds1filter	1233013	3	2.433064371584079e-6	2.433064371584079e-6	2.433064371584079e-6
+P32_RomanianTeeth.pmds1filter	1233013	433	3.519833124224968e-4	3.519833124224968e-4	3.5117229096530206e-4
