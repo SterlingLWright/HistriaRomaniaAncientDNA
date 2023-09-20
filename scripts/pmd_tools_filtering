@@ -11,3 +11,6 @@ cat SampleNames.txt|while read samples;do
 samtools view -h ${samples}_bwa_mapped_q37_sorted_rmdup_uniq.bam_MD.bam|pmdtools --threshold 1 --header|samtools view -Sb - > ${samples}.pmds1filter.bam;
 done
 
+cat SampleNames.txt|while read samples;do 
+samtools view -h ${samples}_bwa_mapped_q37_sorted_rmdup_uniq.bam_MD.bam|pmdtools --threshold 3 --header|samtools view -Sb - > ${samples}.pmds3filter.bam;
+done
