@@ -1,1 +1,11 @@
+#################################################################################
+#
+# Rx analysis 
+#
+# Sterling Wright, September 20th, 2023 
+#################################################################################
 
+ls *MD.bam|while read samples; 
+do Rx_compute=R_x_compute.r;
+samtools idxstats $samples > ${samtools}.idxstats;
+done
