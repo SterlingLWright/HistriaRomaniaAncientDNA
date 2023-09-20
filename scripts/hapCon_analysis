@@ -10,8 +10,8 @@ conda activate hapROH
 
 module load bwa anaconda3 gcc/8.3.1 samtools/1.13
 
-ref=/gpfs/group/LiberalArts/default/lsw132_collab/04_LabMembersFolders/SterlingLWright/Romania_Analyses/Epigenetic_data/hs37d5_ALIGNMENTS/UNIQ_BAM_FILES/reference/hapCon/reference/chrX_1000G.hdf5
-meta=/gpfs/group/LiberalArts/default/lsw132_collab/04_LabMembersFolders/SterlingLWright/Romania_Analyses/Epigenetic_data/hs37d5_ALIGNMENTS/UNIQ_BAM_FILE/reference/hapCon/reference/meta_df_all.csv
+ref=chrX_1000G.hdf5
+meta=meta_df_all.csv
 
 hapConX --bam P26_RomanianTeeth_bwa_mapped_q37_sorted_rmdup_uniq.bam_MD.bam -r $ref --meta $meta > hapCon_P26_results.txt
 hapConX --bam P27_RomanianTeeth_bwa_mapped_q37_sorted_rmdup_uniq.bam_MD.bam -r $ref --meta $meta > hapCon_P27_results.txt
