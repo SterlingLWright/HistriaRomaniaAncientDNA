@@ -1,0 +1,7 @@
+
+
+module load bwa anaconda3 gcc/8.3.1 samtools/1.13
+
+cat SampleNames.txt|while read samples;do 
+samtools view -h ${samples}_bwa_mapped_q37_sorted_rmdup_uniq.bam_MD.bam|pmdtools --threshold 1 --header|samtools view -Sb - > ${samples}.pmds1filter.bam;
+done
