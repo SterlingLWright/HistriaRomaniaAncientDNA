@@ -1,16 +1,24 @@
-
-
-
+#################################################################################
+#
+# Population structure analysis 
+#
+# Sterling Wright, September 20th, 2023 
+#################################################################################
 
 conda activate Human_Analysis
 
 module load bwa anaconda3 gcc/8.3.1 samtools/1.13
 
+plink --bfile Histria --recode tab --out Histria
+
+# filter Histria dataset to remove contaminated and low coverage samles 
+plink --file Histria --keep filtered_histria_samples.txt --make-bed --out filtered_Histria
+
 # convert binaries to PLINK bed files 
 # write convertf files for each dataset (*.geno, *.snp, and *.ind) 
 
-#convertf -p convertfHistria_only.txt
-#convertf -p convertf_SouthernArc.txt
+convertf -p convertfHistria_only.txt
+convertf -p convertf_SouthernArc.txt
 
 # create a secondary_dataset text file taht includes the plink files for the Lazardis dataset (i.e. SouthernArc_Public.bed, etc) 
 # run plink to merge the datasets 
@@ -44,3 +52,16 @@ convertf -p PED_TO_EIGENSTRAT_parameter.txt
 
 # use smartpca to create eigenstrat files 
 smartpca -p SMARTPCA_parameters.txt
+
+# qpadm 
+qpdadm -p 3 Histria_merged_SouthernArc_geno07_maf05_ld_PED
+
+# admixture analysis 
+for K in {3..12}
+ do
+  admixture -s 43 --cv Histria_merged_SouthernArc_geno07_maf05_ld.bed $K > log${K}.out
+ done
+
+grep "CV" *out | awk '{print $3,$4}' | cut -c 4,7-20 > Histria_merged_SouthernArc.cv.error
+
+awk '{split($1,name,"."); print $1,name[2]}' Histria_merged_SouthernArc_geno07_maf05_ld.nosex > Histria_merged_SouthernArc.list
