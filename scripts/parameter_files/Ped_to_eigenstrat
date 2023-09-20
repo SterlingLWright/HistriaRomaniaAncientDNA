@@ -1,0 +1,9 @@
+# Input files
+genotypename: Histria_merged_SouthernArc_geno07_maf05_ld_PED.ped    # Path to the input PED file
+snpname: Histria_merged_SouthernArc_geno07_maf05_ld_PED.map         # Path to the input MAP file
+indivname: Histria_merged_SouthernArc_geno07_maf05_ld_PED.ped       # Path to the input PED file
+
+# Output files
+genotypeoutname: Histria_merged_SouthernArc_geno07_maf05_ld_PED.geno   # Output file for genotype data
+snpoutname: Histria_merged_SouthernArc_geno07_maf05_ld_PED.snp         # Output file for SNP information
+indivoutname: Histria_merged_SouthernArc_geno07_maf05_ld_PED.ind       # Output file for individual information
