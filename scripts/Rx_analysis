@@ -9,3 +9,8 @@ ls *MD.bam|while read samples;
 do Rx_compute=R_x_compute.r;
 samtools idxstats $samples > ${samtools}.idxstats;
 done
+
+cat SampleNames.txt|while read samples;do Rx_compute=R_x_compute.r;
+samtools idxstats ${samples}.pmdsfilter.bam > ${samples}.pmds3filter.bam.idxstats;
+Rscript $Rx_compute ${samples}.pmds3filter.bam > ${samples}_pmds_filter.Rx ;
+done
