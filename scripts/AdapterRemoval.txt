@@ -1,0 +1,26 @@
+#################################################################################
+#
+# Removal of adapters and low quality bases with AdapterRemoval2 
+#
+# Sterling Wright, September 20th, 2023 
+#################################################################################
+
+arr=(
+"P25_RomanianTeeth"
+"P28_RomanianTeeth"
+"P31_RomanianTeeth"
+"P26_RomanianTeeth"
+"P29_RomanianTeeth"
+"P32_RomanianTeeth"
+"P27_RomanianTeeth"
+"P30_RomanianTeeth"
+"P33_EBC1_RomanianTeeth")
+
+## This script uses a for loop to run the pipeline on each sample in the working directory
+for i in "${arr[@]}";
+ do
+        echo "$i"
+AdapterRemoval --file1 "$i".pair1.fastq --file2 "$i".pair2.fastq --trimns \
+--trimqualities --minquality 20 --collapse --minlength 25 \
+--output1 "$i"_trimmed_R1.fastq --output2 "$i"_trimmed_R2.fastq \
+--outputcollapsed "$i"_trimmed_merged.fastq --settings "$i"_AdapterRemoval.txt;done;
