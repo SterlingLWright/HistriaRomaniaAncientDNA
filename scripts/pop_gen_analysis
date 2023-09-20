@@ -1,1 +1,46 @@
 
+
+
+
+conda activate Human_Analysis
+
+module load bwa anaconda3 gcc/8.3.1 samtools/1.13
+
+# convert binaries to PLINK bed files 
+# write convertf files for each dataset (*.geno, *.snp, and *.ind) 
+
+#convertf -p convertfHistria_only.txt
+#convertf -p convertf_SouthernArc.txt
+
+# create a secondary_dataset text file taht includes the plink files for the Lazardis dataset (i.e. SouthernArc_Public.bed, etc) 
+# run plink to merge the datasets 
+
+plink --bfile filtered_Histria --merge-list secondary_datasets.txt --allow-no-sex --indiv-sort 0 --make-bed --out Histria_merged_SouthernArc
+
+# convert BED file to a map file 
+plink --bfile Histria_merged_SouthernArc --recode tab --out Histria_merged_SouthernArc
+
+# convert BED to PED and filter the dataset 
+plink --file Histria_merged_SouthernArc --geno 0.70 --maf 0.05 --recode --out Histria_merged_SouthernArc_geno07_maf05
+# 0.7 --> Narasimhan et al. 2019 (The formation of human populations in South and Central Asia)
+# maf=0.05 ; Tendvall et al. 2022
+
+#convert PED to BED to run the LD analysis
+plink --file Histria_merged_SouthernArc_geno07_maf05 --make-bed --out Histria_merged_SouthernArc_geno07_maf05
+
+# account for linkage disequilibrium in your dataset by using plink
+plink --bfile Histria_merged_SouthernArc_geno07_maf05 --keep Histria_merged_SouthernArc_geno07_maf05.fam --indep-pairwise 50 5 0.5
+# window size = 50, step size = 5, R^2 threshold = 0.5 
+
+# include only SNPs that are not in linkage disequilibrium; the prune.in file contains the list of markers included after pruning  
+plink --bfile Histria_merged_SouthernArc_geno07_maf05 --extract plink.prune.in --make-bed --out Histria_merged_SouthernArc_geno07_maf05_ld
+
+# convert BED to PED 
+plink --bfile Histria_merged_SouthernArc_geno07_maf05_ld --recode --allow-no-sex --out Histria_merged_SouthernArc_geno07_maf05_ld_PED
+
+# convert PED to Eigenstrat format using the convertf utility from the Eigensoft package 
+# Eigensoft is a collection of population genetics software 
+convertf -p PED_TO_EIGENSTRAT_parameter.txt
+
+# use smartpca to create eigenstrat files 
+smartpca -p SMARTPCA_parameters.txt
