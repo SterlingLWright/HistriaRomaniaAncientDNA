@@ -26,3 +26,14 @@ P29_RomanianTeeth.pmds1filter	1233013	1002	8.166986073950558e-4	8.16698607395055
 P30_RomanianTeeth.pmds1filter	1233013	61	4.947230888887627e-5	4.947230888887627e-5	4.947230888887627e-5
 P31_RomanianTeeth.pmds1filter	1233013	3	2.433064371584079e-6	2.433064371584079e-6	2.433064371584079e-6
 P32_RomanianTeeth.pmds1filter	1233013	433	3.519833124224968e-4	3.519833124224968e-4	3.5117229096530206e-4
+
+SNPS=v54.1.p1_1240K_public.snp
+
+pileupCaller --randomHaploid --sampleNames P25_RomanianTeeth.pmds1filter.bam --samplePopName ROM -f $SNPS -e P25
+pileupCaller --randomHaploid --sampleNames P26_RomanianTeeth.pmds1filter.bam --samplePopName ROM -f $SNPS -e P26
+pileupCaller --randomHaploid --sampleNames P27_RomanianTeeth.pmds1filter.bam --samplePopName ROM -f $SNPS -e P27
+pileupCaller --randomHaploid --sampleNames P28_RomanianTeeth.pmds1filter.bam --samplePopName ROM -f $SNPS -e P28
+pileupCaller --randomHaploid --sampleNames P29_RomanianTeeth.pmds1filter.bam --samplePopName ROM -f $SNPS -e P29
+pileupCaller --randomHaploid --sampleNames P30_RomanianTeeth.pmds1filter.bam --samplePopName ROM -f $SNPS -e P30
+pileupCaller --randomHaploid --sampleNames P31_RomanianTeeth.pmds1filter.bam --samplePopName ROM -f $SNPS -e P31
+pileupCaller --randomHaploid --sampleNames P32_RomanianTeeth.pmds1filter.bam --samplePopName ROM -f $SNPS -e P32
