@@ -1,1 +1,347 @@
+#################################################################################
+#
+# rCRS analysis 
+#
+# Sterling Wright, September 20th, 2023 
+#################################################################################
 
+conda activate MapDamage2
+
+module load bwa anaconda3 gcc/8.3.1 samtools/1.13
+
+## LAST UPDATED
+## 05 JUNE 2023
+
+## MODIFY BEFORE RUNNING ##
+## Modify the path to the reference genome (FASTA file)
+ref=hs37d5/hs37d5.fa
+
+
+## Modify the path containing the Sample folders and the vcf_tab_to_fasta_alignment script
+path=$path
+
+## Modify the following paths to the programs
+## You can also add paths to programs that need to specified for your computer
+VarScan=VarScan.v2.3.9.jar
+qualimap=qualimap_v2.2.1/qualimap
+
+## Name of folder to be created within each Sample folder
+## This folder will have the results of running the human_endogenous_DNA_pipeline.sh pipeline on the sample
+outdir="hs37d5"
+
+## Index the reference using both bwa and samtools
+## If this has been done previously, comment out the following two lines (no need to re-index)
+
+#bwa index $ref
+#samtools faidx $ref
+
+## RUN PIPELINE ##
+## Usage: $./MapDamage_pipeline.sh
+
+#### PIPELINE BEGINS ####
+## Make a tab-delimited file containing summary of the results
+echo -e "Sample \t Total Reads \t Analysis-ready reads (trimmed and merged) \t Proportion of reads kept after trimming and merging \t Mapped reads \t Proportion of reads mapped (Mapped reads / Analysis-ready reads) \t Q37 mapped reads \t Unique Q37 mapped reads \t Average length of mapped reads \t Rescaled or Not \t Mean coverage \t Std dev of mean coverage \t % reference covered >= 1X \t % reference covered >= 5X \t Cluster factor (Mapped reads/ Unique Q37 mapped reads) \t % endogenous DNA (Unique Q37 mapped reads / Total reads) \t No. of homozygous SNPs \t No. of heterozygous SNPs" > $path/rCRS_pipeline_summary.txt
+
+## This script uses a for loop to run the pipeline on each sample in the working directory
+for a in $path/Sample_*;
+ do
+  cd $a
+
+  ID=$(basename $a)
+  NAME=$(echo $ID |cut -d "_" -f2)
+  echo "Running the rCRS pipeline on sample "${NAME}"..."
+
+  mkdir $outdir
+
+## 1. Removing adapter sequences (if any), trimming, and merging R1 and R2 files using AdapterRemoval2
+## --trimns: removes stretches of Ns from 5-prime and 3-prime ends
+## --trimqualities and --minquality: removes stretches of low qual bases as set by minquality option
+## --collapse: merges overlapping reads into one and recalculates the quality
+## --minlength: merged reads shorter than specified length are removed
+## --output1 and output2: trimmed R1 and R2 files
+## --outputcollapsed: final output file containing trimmed and merged (analysis-ready) reads
+## --settings: txt file containing parameters used and overall statistics
+
+## If AdapterRemoval has already been run, comment out the following lines
+#AdapterRemoval --threads 2 --file1 <(zcat $path/Sample_"${NAME}"/"${NAME}"_R1.fastq.gz) --file2 <(zcat $path/Sample_"${NAME}"/"${NAME}"_R2.fastq.gz) --trimns --trimqualities --minquality 20 --collapse --minlength 30 --output1 >(gzip > $path/Sample_"${NAME}"/"${NAME}"_trimmed_R1.fastq.gz) --output2 >(gzip > $path/Sample_"${NAME}"/"${NAME}"_trimmed_R2.fastq.gz) --outputcollapsed >(gzip > $path/Sample_"${NAME}"/"${NAME}"_trimmed_merged.fastq.gz) --settings $path/Sample_"${NAME}"/"${NAME}"_AdapterRemoval.txt
+
+##  rm $path/Sample_"${NAME}"/your_output*
+
+## Do not comment out the following lines - let the statistics still be calculated!
+## Calculate statistics
+
+  total_reads=`grep "Total number of read pairs" $path/Sample_"${NAME}"/"${NAME}"_AdapterRemoval.txt | awk '{print $NF}'`
+  analysis_ready=`grep "Number of full-length collapsed pairs" $path/Sample_"${NAME}"/"${NAME}"_AdapterRemoval.txt | awk '{print $NF}'`
+  pc_merged=`echo "scale=4;$analysis_ready/$total_reads" | bc`
+
+## 2. Mapping analysis-ready reads to a reference genome using BWA
+
+## bwa aln finds the SA coordinates of the input reads
+##  -l 1000 disables seed for usage with aDNA reads; do not use if you are working with modern DNA data
+##  -n denotes edit distance and allows more or less mismatches; 0.04 (default) or reduce to 0.01 (less stringent) or increase to 0.1 (to make mapping more strict)
+## Here we use n = 0.1 for a strict mappping
+##  -t denotes number of threads used - can be changed as desired
+## bwa samse generates alignments in the SAM format given single-end reads
+
+## Here we are using only the trimmed and merged reads as input. Modify the following if you need to use unmerged R1 and R2 as well. 
+
+  bwa aln -l 1000 -n 0.1 -t 8 $ref $path/Sample_"${NAME}"/"${NAME}"_trimmed_merged.fastq > $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged.sai
+
+  bwa samse $ref $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged.sai $path/Sample_"${NAME}"/"${NAME}"_trimmed_merged.fastq > $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_all.sam
+
+## 3. Filtering, sorting, removing duplicates using SAMtools
+## samtools view -bSh displays SAM file as a BAM file (b); input is SAM (S),and includes the header (h)
+
+  samtools view -bSh $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_all.sam > $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_all.bam
+
+## Create a report summary file
+
+  echo " " >> $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt
+  echo "${NAME}" >> $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt
+  echo "---------------------------------------" >> $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt
+  echo "Analysis-ready reads" >> $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt
+
+## Use samtools view to count alignments and print the total number to the report summary file
+
+  samtools view -c $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_all.bam >> $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt
+
+## Filter out unmappped and low quality reads
+## samtools view -bh -F4 -q displays the previous output as a BAM file (b), and
+## includes the header (h), but skips alignments with MAPQ smaller than than 37
+## (-q 37), and alignments containing the 4 flag (0x4 segment unmapped)
+
+  samtools view -bh -F4 $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_all.bam > $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped.bam
+
+  samtools view -bh -q 37 $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped.bam > $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37.bam
+
+## Sort alignments by leftmost coordinates
+
+  samtools sort -o $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted.bam $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37.bam
+
+## Print alignment statistics after removing low quality reads
+
+  echo "Mapped reads" >> $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt
+  samtools view -c $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped.bam >> $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt
+  echo "Q37 mapped reads" >> $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt
+  samtools view -c $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted.bam >> $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt
+
+## Remove PCR duplicates
+## samtools rmdup removes potential PCR duplicates
+## if multiple read pairs have identical external coordinates, only retain the pair with highest mapping quality
+## -s Remove duplicate for single-end reads. By default, the command works for paired-end reads only
+
+  samtools rmdup -s $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted.bam $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup.bam
+
+## Print results after rmdup
+
+  echo "After removing duplicates" >> $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt
+  samtools view -c $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup.bam >> $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt
+
+## Remove reads with multiple mappings
+## grep -v means invert the match, it returns all non matching lines (all the reads that are not multiple mappings)
+## [XT:A:U flag in the SAM file denotes unique read, and XT:A:R and XA:Z denote multiple mappings for that read]
+## When working with paired end reads, it may also be useful to consider filtering out reads with the flag XT:A:M
+## (one-mate recovered) which means that one of the pairs is uniquely mapped and the other isn't]
+## Use awk to scan input file for lines that match the pattern: {if($0~/X1:i:0/||$0~/^@/)print $0}
+## X1= Number of suboptimal hits found by BWA, if X1=0 then keep that read in file
+
+  samtools view -h $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup.bam |grep -v 'XT:A:R'|grep -v 'XA:Z' |grep -v 'XT:A:M' |awk '{if($0~/X1:i:0/||$0~/^@/)print $0}' | samtools view -bS - > $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup_uniq.bam
+
+## The Sample_trimmed_merged_bwa_mapped_q37_sorted_rmdup_uniq.bam file is the final BAM file that should be used for further analyses
+## If working with modern DNA, use this file for further analyses
+
+## Print results after removing reads with multiple mappings
+
+  echo "Unique reads" >> $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt
+  samtools view -c $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup_uniq.bam >> $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt
+
+## Print average length in report using awk
+
+  echo "Average length of mapped reads" >> $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt
+  samtools view $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup_uniq.bam |awk '{SUM+=length($10);DIV++}END{print SUM/DIV}' >> $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt
+  no_unique_reads=`samtools view -c $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup_uniq.bam`
+
+## Index alignment and print additional statistics
+
+  samtools index $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup_uniq.bam
+  samtools flagstat $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup_uniq.bam >> $path/Sample_"${NAME}"/$outdir/"${NAME}"_flagstat.txt
+
+## Calculate statistics
+  rm $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged.sai
+  rm $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_all.sam
+  rm $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_all.bam
+  rm $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped.bam
+  rm $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37.bam
+  rm $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted.bam
+  rm $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup.bam
+
+## Calculate statistics
+  mapped=`grep -A 1 "Mapped reads" $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt | grep -v "Mapped reads"`
+  Q37=`grep -A 1 "Q37 mapped reads" $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt | grep -v "Q37 mapped reads"`
+  unique=`grep -A 1 "Unique reads" $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt | grep -v "Unique reads"`
+  pc_mapped=`echo "scale=4;$mapped/$analysis_ready" | bc`
+
+## 4. Generate damage patterns with mapDamage and estimate coverage statistics using Qualimap2
+## The --rescale option can be used to generate a rescaled BAM file, which rescales the qual scores for likely damaged positions in the reads
+## This allows higher quality variant calling and reduces false positive calls
+## -q denotes quiet
+## If you are working with modern DNA, you need not run mapDamage 
+
+## Use Qualimap2 to determine:
+##  - mean coverage
+##  - percentage of the genome covered at least one-fold
+
+## Check if BAM file is empty or not
+## If there are no unique reads, then MapDamage and following programs will not run
+#  if [ $no_unique_reads -eq 0 ]
+#  then
+#   length="There were no unique mapped reads"
+#   rescaled="BAM file was empty, truncated, or not generated"
+#   mean_cov="N/A"
+#   sd_cov="N/A"
+#   cov1="N/A"
+#   cov5="N/A"
+#   cf="N/A"
+#   endo="N/A"
+#   hom="N/A"
+#   het="N/A"
+
+#  else
+#   length=`grep -A 1 "Average length of mapped reads" $path/Sample_"${NAME}"/$outdir/"${NAME}"_MappingReport.txt | grep -v "Average length of mapped reads"`
+#   cf=`echo "scale=4;$mapped/$unique" | bc`
+#   endo=`echo "scale=4;$unique/$total_reads" | bc`
+
+   mapDamage -i $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup_uniq.bam -r $ref -q -d $path/Sample_"${NAME}"/$outdir/"${NAME}"_MapDamage_results
+
+## If rescaling has worked, we will run Qualimap on the rescaled BAM file and use this BAM file hereafter
+## Retrieve rescaled BAM file from this folder and index it
+
+   #rescaled_BAM=$path/Sample_"${NAME}"/$outdir/"${NAME}"_MapDamage_results/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup_uniq.rescaled.bam
+
+   #if [ -f $rescaled_BAM ]
+   #then
+   # rescaled="Yes"
+   # mv $path/Sample_"${NAME}"/$outdir/"${NAME}"_MapDamage_results/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup_uniq.rescaled.bam $path/Sample_"${NAME}"/$outdir
+   # samtools index $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup_uniq.rescaled.bam
+
+    #$qualimap bamqc -bam $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup_uniq.rescaled.bam -outdir $path/Sample_"${NAME}"/$outdir/"${NAME}"_RescaledBAM_QualimapStats -outformat pdf > /dev/null
+
+## Check if Qualimap ran successfully i.e. if the exit status of the last command was zero (successful) or non-zero
+   # if [ $? -eq 0 ]
+   # then
+  #   cd $path/Sample_"${NAME}"/$outdir/"${NAME}"_RescaledBAM_QualimapStats
+ #    mean_cov=`grep "mean coverageData" genome_results.txt | cut -d "=" -f2`
+#     sd_cov=`grep "std coverageData" genome_results.txt | cut -d "=" -f2`
+#     cov1=`grep "reference with a coverageData >= 1X" genome_results.txt | awk '{print $4}'`
+ #    cov5=`grep "reference with a coverageData >= 5X" genome_results.txt | awk '{print $4}'`
+#     cd ..
+
+#    else
+#     mean_cov="N/A"
+#     sd_cov="N/A"
+#     cov1="N/A"
+#     cov5="N/A"
+#     cf="N/A"
+#     endo="N/A"
+#     hom="N/A"
+#     het="N/A"
+#    fi
+
+## If rescaling has not worked (usually for negative controls), then we will run Qualimap on the BAM file containing mapped Q37 unique reads and use this file for further analyses 
+#   else
+#    rescaled="No"
+#    $qualimap bamqc -bam $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup_uniq.bam -outdir $path/Sample_"${NAME}"/$outdir/"${NAME}"_BAMNotRescaled_QualimapStats -outformat pdf > /dev/null
+
+#    if [ $? -eq 0 ] 
+ #   then
+  #   cd $path/Sample_"${NAME}"/$outdir/"${NAME}"_BAMNotRescaled_QualimapStats
+   #  mean_cov=`grep "mean coverageData" genome_results.txt | cut -d "=" -f2`
+    # sd_cov=`grep "std coverageData" genome_results.txt | cut -d "=" -f2`
+#     cov1=`grep "reference with a coverageData >= 1X" genome_results.txt | awk '{print $4}'`
+ #    cov5=`grep "reference with a coverageData >= 5X" genome_results.txt | awk '{print $4}'`
+  #   cd ..
+
+#    else
+ #    mean_cov="N/A"
+  #   sd_cov="N/A"
+   #  cov1="N/A"
+    # cov5="N/A"
+#     cf="N/A"
+ #    endo="N/A"
+  #   hom="N/A"
+   #  het="N/A"
+    #fi
+
+#   fi
+
+## 5. Use samtools mpileup and VarScan2 to generate VCF file
+## samtools mpileup -a option is used to generate calls at ALL sites, including zero read-depth ones
+
+## Generate the VCF file using VarScan mpileup2cns
+## --min-coverage = minimum coverage at a site to make a call (for low coverage datasets, you can use 5)
+## --min-reads2 = minimum number of reads covering the variant allele to call it as a SNP (for low coverage datasets, you can use 3, but be careful while going lower)
+## --min-avg-qual = minimum quality required at a base to make a call (not recommended to go lower than 30)
+## --min-var-freq = minimum percent of reads covering variant allele to call it a SNP (20% is commonly used)
+## --min-freq-for-hom = minimum percent of reads covering variant allele to call it a homozygous SNP (80-95% commonly used)
+## With these paramters, basically a position will be called as a SNP if at least 20% of reads cover the variant allele
+## If the percentage of reads covering the variant allele is between 20-90% then it will be called as a heterozygous SNP and if greater than 90%, then it will be a homozygous SNP.
+## --p-value = p-value threshold for calling variants
+## --strand-filter = whether or not to ignore variants with >90% support on one strand (0 means do not ignore)
+## --variants = output only variant positions (if you leave out this option, you will get a VCF file containing invariant sites as well)
+
+ #  if [ -f $rescaled_BAM ]
+ #  then
+ #   samtools mpileup -a -f $ref $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup_uniq.rescaled.bam | java -jar $VarScan mpileup2cns --min-coverage 5 --min-reads2 3 --min-avg-qual 30 --min-var-freq 0.2 --min-freq-for-hom 0.9 --p-value 1 --strand-filter 0 --output-vcf > $path/Sample_"${NAME}"/$outdir/"${NAME}"_raw.vcf
+
+#   else
+ #   samtools mpileup -a -f $ref $path/Sample_"${NAME}"/$outdir/"${NAME}"_trimmed_merged_bwa_mapped_q37_sorted_rmdup_uniq.bam | java -jar $VarScan mpileup2cns --min-coverage 5 --min-reads2 3 --min-avg-qual 30 --min-var-freq 0.2  --min-freq-for-hom 0.9 --p-value 1 --strand-filter 0 --output-vcf > $path/Sample_"${NAME}"/$outdir/"${NAME}"_raw.vcf
+
+  # fi
+
+## Edit the file such that the last column has the appropriate sample name
+
+  # sed -i 's/Sample1/'"${NAME}"'/g' $path/Sample_"${NAME}"/$outdir/"${NAME}"_raw.vcf
+
+## The sample_raw.vcf file contains calls for all sites (variant as well invariant)
+## This file can be used for downstream analyses
+
+## Count the number of homozygous and heterozygous SNPs
+#   hom=`grep "1/1" $path/Sample_"${NAME}"/$outdir/"${NAME}"_raw.vcf | wc -l`
+#   het=`grep "0/1" $path/Sample_"${NAME}"/$outdir/"${NAME}"_raw.vcf | wc -l`
+
+## 7. Generate a consensus sequence in FASTA format
+## Here, a perl script called vcf_tab_to_fasta_alignment is being called to generate the consensus
+## This script has been written by Christina Bergey, Perry Lab
+## This requires that the VCF file be bgzipped and indexed using tabix and then formatted to a tab file
+## There are many other perl scripts/tools available to get a consensus in FASTA format from your VCF file
+
+##   bgzip -c $path/Sample_"${NAME}"/$outdir/"${NAME}"_raw.vcf > $path/Sample_"${NAME}"/$outdir/"${NAME}"_raw.vcf.gz
+
+##   tabix -p vcf $path/Sample_"${NAME}"/$outdir/"${NAME}"_raw.vcf.gz
+
+##   zcat $path/Sample_"${NAME}"/$outdir/"${NAME}"_raw.vcf.gz | vcf-to-tab > $path/Sample_"${NAME}"/$outdir/"${NAME}"_raw.tab
+
+## Change all ./. positions to N/N so that vcf_fasta_to_tab script does not mess up
+##   sed -i 's/\.\/\./N\/N/g' $path/Sample_"${NAME}"/$outdir/"${NAME}"_raw.tab
+
+##   perl $path/vcf_tab_to_fasta_alignment.pl -i $path/Sample_"${NAME}"/$outdir/"${NAME}"_raw.tab > $path/Sample_"${NAME}"/$outdir/"${NAME}"_consensus.fasta
+
+## Remove unwanted files
+##   rm $path/Sample_"${NAME}"/$outdir/"${NAME}"_raw.tab_clean
+
+## The FASTA file containing your reconstructed genome can be used for further downstream analyses
+## For human mtDNA, this FASTA file can be used as input for Haplogrep2 using the web-based server
+## Note: With aDNA data, it is a good idea to confirm the haplogroup by re-checking important diagnostic positions manually (especially for low-coverage datasets)
+
+ # fi  
+
+## Output all the variables we have compiled so far into the tab-delimited file
+
+  echo -e "${NAME} \t $total_reads \t $analysis_ready \t $pc_merged \t $mapped \t $pc_mapped \t $Q37 \t $unique \t $length \t $rescaled \t $mean_cov \t $sd_cov \t $cov1 \t $cov5 \t $cf \t $endo \t $hom \t $het \n" >> $path/rCRS_pipeline_summary.txt
+
+## The cd .. will take you back to your working directory and since you are still in the loop, the pipeline will now be run on the next sample until all samples have been analyzed
+  cd ..
+
+ done
+
+#### PIPELINE ENDS ####
