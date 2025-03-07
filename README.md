@@ -32,12 +32,6 @@ Ensure you have the following dependencies installed before running the scripts:
 - Required R packages: `phyloseq`, `vegan`, `ggplot2`, `DESeq2`, `qiime2R`, `compositions`
 - Required Python packages: `pandas`, `numpy`, `scikit-learn`, `seaborn`
 
-### Running the Analyses  
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/yourusername/repository-name.git
-   cd repository-name
-
 ### Data availability
 The proteomic data are publicly available on MassIVE (accession no. MSV000093976) and Zenodo (https://doi.org/10.5281/zenodo.10551784).
 The raw sequencing data can be found on NCBI SRA database under the project PRJNA70418. 
