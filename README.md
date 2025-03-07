@@ -9,8 +9,6 @@ This repository contains the datasets, analysis scripts, and results associated 
 If you use this dataset or scripts, please cite the article:  
 Wright, S. L. et al. Ancient DNA and paleoproteomic analysis on Roman Imperial-era individuals from Histria, Romania. Journal of Archaeological Science: Reports 56, 104510 (2024).
 
-*. [DOI](https://doi.org/10.1016/j.dib.2024.108735)
-
 ## Repository Structure
 
 - **`results/`** – Contains processed data, summary statistics, and visualizations used in the publication.
